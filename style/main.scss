@@ -5,7 +5,7 @@ $field-width: 500px;
 $grid-spacing: 15px;
 $grid-row-cells: 4;
 $tile-size: ($field-width - $grid-spacing * ($grid-row-cells + 1)) / $grid-row-cells;
-$tile-border-radius: 3px;
+$tile-border-radius: 12px;
 
 $mobile-threshold: $field-width + 20px;
 
@@ -21,14 +21,83 @@ $game-container-background: #bbada0;
 
 $transition-speed: 100ms;
 
+// Dark theme colors, darker shades of the light theme's warm palette
+$dark-background: #1e1b18;
+$dark-text-color: #d6cdc4;
+$dark-game-container-background: #3a332c;
+$dark-cell-color: #7a6c5f;
+$dark-hr-color: #3e3832;
+
+// Tile backgrounds for the dark theme, by tile value
+$dark-tile-colors: 2 #6b5f53,
+                   4 #786a55,
+                   8 #ce9767,
+                   16 #d07f54,
+                   32 #d16951,
+                   64 #d15032,
+                   128 #c9b061,
+                   256 #c9ad52,
+                   512 #c9aa44,
+                   1024 #c9a736,
+                   2048 #c9a527;
+$dark-tile-super-color: #12100e;
+
+// Liquid glass surfaces: fill, edge, top highlight and drop shadow
+$glass-blur: blur(24px) saturate(180%);
+
+$glass-background: rgba(white, .35);
+$glass-edge: rgba(white, .55);
+$glass-highlight: rgba(white, .9);
+$glass-shadow: rgba($text-color, .18);
+
+$dark-glass-background: rgba(white, .07);
+$dark-glass-edge: rgba(white, .12);
+$dark-glass-highlight: rgba(white, .28);
+$dark-glass-shadow: rgba(black, .45);
+
+$glass-tile-opacity: .88;
+$glass-tile-shadow: inset 0 1px 1px rgba(white, .7),
+                    inset 0 -2px 3px rgba(black, .08),
+                    inset 0 0 0 1px rgba(white, .25),
+                    0 3px 10px rgba(black, .1);
+$glass-sheen: linear-gradient(160deg, rgba(white, .45) 0%, rgba(white, .1) 40%,
+                              rgba(white, 0) 60%, rgba(white, .08) 100%);
+
+$button-tint: darken($game-container-background, 20%);
+
+// Glows behind the glass, in the tile palette
+@mixin page-background($base, $orange, $gold, $red, $taupe) {
+  background-color: $base;
+  background-image: radial-gradient(circle at 12% 18%, $orange, transparent 42%),
+                    radial-gradient(circle at 88% 12%, $gold, transparent 40%),
+                    radial-gradient(circle at 80% 88%, $red, transparent 45%),
+                    radial-gradient(circle at 18% 82%, $taupe, transparent 45%);
+  background-attachment: fixed;
+}
+
+@mixin glass($background, $edge, $highlight, $shadow) {
+  background: $background;
+  -webkit-backdrop-filter: $glass-blur;
+  backdrop-filter: $glass-blur;
+  box-shadow: inset 0 0 0 1px $edge,
+              inset 0 1px 0 $highlight,
+              0 8px 32px $shadow;
+}
+
+html {
+  min-height: 100%;
+  @include page-background(#faf8ef, rgba(#f2b179, .55), rgba(#edcf72, .55),
+                           rgba(#f67c5f, .35), rgba($game-container-background, .55));
+}
+
 html, body {
   margin: 0;
   padding: 0;
 
-  background: #faf8ef;
   color: $text-color;
-  font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Clear Sans", "Helvetica Neue", Arial, sans-serif;
   font-size: 18px;
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
@@ -69,14 +138,14 @@ h1.title {
 
   position: relative;
   display: inline-block;
-  background: $game-container-background;
+  @include glass($glass-background, $glass-edge, $glass-highlight, $glass-shadow);
   padding: 15px 25px;
   font-size: $height;
   height: $height;
   line-height: $height + 22px;
   font-weight: bold;
-  border-radius: 3px;
-  color: white;
+  border-radius: 18px;
+  color: $text-color;
   margin-top: 8px;
   text-align: center;
 
@@ -86,10 +155,11 @@ h1.title {
     top: 10px;
     left: 0;
     text-transform: uppercase;
-    font-size: 13px;
+    letter-spacing: .08em;
+    font-size: 12px;
     line-height: 13px;
     text-align: center;
-    color: $tile-color;
+    color: rgba($text-color, .7);
   }
 
   .score-addition {
@@ -135,7 +205,7 @@ strong {
 
 hr {
   border: none;
-  border-bottom: 1px solid lighten($text-color, 40%);
+  border-bottom: 1px solid rgba($text-color, .2);
   margin-top: 20px;
   margin-bottom: 30px;
 }
@@ -158,13 +228,22 @@ hr {
 // Styles for buttons
 @mixin button {
   display: inline-block;
-  background: darken($game-container-background, 20%);
-  border-radius: 3px;
-  padding: 0 20px;
+  @include glass(rgba($button-tint, .8), rgba(white, .3), rgba(white, .55), rgba($button-tint, .35));
+  border-radius: 999px;
+  padding: 0 22px;
   text-decoration: none;
   color: $bright-text-color;
   height: 40px;
-  line-height: 42px;
+  line-height: 40px;
+  @include transition(transform 150ms ease, background-color 150ms ease);
+
+  &:hover {
+    background-color: rgba($button-tint, .9);
+  }
+
+  &:active {
+    @include transform(scale(.96));
+  }
 }
 
 // Game field mixin used to render CSS at different width
@@ -185,7 +264,7 @@ hr {
     -ms-touch-action: none;
     touch-action: none;
 
-    background: $game-container-background;
+    @include glass($glass-background, $glass-edge, $glass-highlight, $glass-shadow);
     border-radius: $tile-border-radius * 2;
     width: $field-width;
     height: $field-width;
@@ -201,7 +280,10 @@ hr {
       right: 0;
       bottom: 0;
       left: 0;
-      background: rgba($tile-color, .5);
+      background: rgba($tile-color, .4);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      border-radius: inherit;
       z-index: 100;
 
       text-align: center;
@@ -235,7 +317,7 @@ hr {
       @include animation-fill-mode(both);
 
       &.game-won {
-        background: rgba($tile-gold-color, .5);
+        background: rgba($tile-gold-color, .4);
         color: $bright-text-color;
 
 	a.keep-playing-button {
@@ -276,7 +358,9 @@ hr {
 
     border-radius: $tile-border-radius;
 
-    background: rgba($tile-color, .35);
+    background: rgba($game-container-background, .2);
+    box-shadow: inset 0 1px 3px rgba($text-color, .15),
+                inset 0 0 0 1px rgba(white, .3);
 
     &:last-child {
       margin-right: 0;
@@ -317,7 +401,9 @@ hr {
   .tile-inner {
     border-radius: $tile-border-radius;
 
-    background: $tile-color;
+    background-color: rgba($tile-color, $glass-tile-opacity);
+    background-image: $glass-sheen;
+    box-shadow: $glass-tile-shadow;
     text-align: center;
     font-weight: bold;
     z-index: 10;
@@ -368,16 +454,18 @@ hr {
 
       @if $bright-color {
         color: $bright-text-color;
+        text-shadow: 0 1px 2px rgba(black, .15);
       }
 
-      // Set background
-      background: $mixed-background;
+      // Set background, tinted glass over the board
+      background-color: rgba($mixed-background, $glass-tile-opacity);
 
       // Add glow
       $glow-opacity: max($exponent - 4, 0) / ($limit - 4);
 
-      @if not $special-background {
-        box-shadow: 0 0 30px 10px rgba($tile-gold-glow-color, $glow-opacity / 1.8),
+      @if not $special-background and $glow-opacity > 0 {
+        box-shadow: $glass-tile-shadow,
+                    0 0 30px 10px rgba($tile-gold-glow-color, $glow-opacity / 1.8),
                     inset 0 0 0 1px rgba(white, $glow-opacity / 3);
       }
 
@@ -404,7 +492,7 @@ hr {
   // Super tiles (above 2048)
   &.tile-super .tile-inner {
     color: $bright-text-color;
-    background: mix(#333, $tile-gold-color, 95%);
+    background-color: rgba(mix(#333, $tile-gold-color, 95%), $glass-tile-opacity);
 
     font-size: 30px;
 
@@ -472,14 +560,36 @@ hr {
   margin-top: 50px;
 }
 
+.container {
+  position: relative;
+}
+
+// Sits in the body's top margin so it doesn't shift the layout
+.theme-toggle {
+  @include button;
+  position: absolute;
+  top: -50px;
+  right: 0;
+  @include glass($glass-background, $glass-edge, $glass-highlight, $glass-shadow);
+  color: $text-color;
+  height: 30px;
+  line-height: 30px;
+  padding: 0 15px;
+  font-size: 14px;
+
+  &:hover {
+    background-color: rgba(white, .5);
+  }
+}
+
 @include smaller($mobile-threshold) {
   // Redefine variables for smaller screens
-  $field-width: 280px;
-  $grid-spacing: 10px;
-  $grid-row-cells: 4;
-  $tile-size: ($field-width - $grid-spacing * ($grid-row-cells + 1)) / $grid-row-cells;
-  $tile-border-radius: 3px;
-  $game-container-margin-top: 17px;
+  $field-width: 280px !global;
+  $grid-spacing: 10px !global;
+  $grid-row-cells: 4 !global;
+  $tile-size: ($field-width - $grid-spacing * ($grid-row-cells + 1)) / $grid-row-cells !global;
+  $tile-border-radius: 8px !global;
+  $game-container-margin-top: 17px !global;
 
   html, body {
     font-size: 15px;
@@ -518,6 +628,16 @@ hr {
     line-height: 1.65;
   }
 
+  .theme-toggle {
+    position: static;
+    float: right;
+    margin-bottom: 10px;
+  }
+
+  .heading {
+    clear: both;
+  }
+
   .restart-button {
     width: 42%;
     padding: 0;
@@ -544,6 +664,80 @@ hr {
 
     .lower {
       margin-top: 30px !important;
+    }
+  }
+}
+
+// Dark theme overrides, enabled by the theme-dark class on <html>
+html.theme-dark {
+  @include page-background($dark-background, rgba(#ce9767, .28), rgba(#c9a527, .22),
+                           rgba(#d15032, .3), rgba(#6b5f53, .45));
+
+  &, body {
+    color: $dark-text-color;
+  }
+
+  a {
+    color: $dark-text-color;
+  }
+
+  hr {
+    border-bottom-color: $dark-hr-color;
+  }
+
+  .score-container, .best-container, .game-container {
+    @include glass($dark-glass-background, $dark-glass-edge, $dark-glass-highlight, $dark-glass-shadow);
+  }
+
+  .score-container, .best-container {
+    color: $bright-text-color;
+
+    &:after {
+      color: rgba($dark-text-color, .7);
+    }
+
+    .score-addition {
+      color: rgba($dark-text-color, .9);
+    }
+  }
+
+  .restart-button, .game-container .game-message a {
+    color: $bright-text-color;
+  }
+
+  .theme-toggle {
+    @include glass($dark-glass-background, $dark-glass-edge, $dark-glass-highlight, $dark-glass-shadow);
+    color: $dark-text-color;
+
+    &:hover {
+      background-color: rgba(white, .14);
+    }
+  }
+
+  .game-container .game-message {
+    background: rgba($dark-background, .45);
+
+    &.game-won {
+      background: rgba($tile-gold-color, .4);
+    }
+  }
+
+  .grid-cell {
+    background: rgba(white, .04);
+    box-shadow: inset 0 1px 3px rgba(black, .35),
+                inset 0 0 0 1px rgba(white, .05);
+  }
+
+  .tile {
+    @each $pair in $dark-tile-colors {
+      &.tile-#{nth($pair, 1)} .tile-inner {
+        background-color: rgba(nth($pair, 2), $glass-tile-opacity);
+        color: $bright-text-color;
+      }
+    }
+
+    &.tile-super .tile-inner {
+      background-color: rgba($dark-tile-super-color, $glass-tile-opacity);
     }
   }
 }
